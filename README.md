@@ -1,1 +1,1 @@
-[link to my app](https://phonebook-5khm.onrender.com)
+[link to my app](https://phonebook-5khm.onrender.com/api/persons)

@@ -7,7 +7,7 @@ const app = express()
 
 app.use(express.json())
 
-morgan.token('req-body',function(req,res){
+morgan.token('req-body', function (req, res) {
     return JSON.stringify(req.body)
 })
 
@@ -67,6 +67,17 @@ personSchema.set('toJSON',{
 
 const Person = mongoose.model('Person',personSchema)*/
 
+const errorHandler = (error, request, response, next) => {
+    console.error(error)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    }
+
+    next(error)
+}
+
+//get's all of them
 app.get('/api/persons', (request, response) => {
     //response.json(persons)
     Person.find({}).then(people => {
@@ -74,22 +85,46 @@ app.get('/api/persons', (request, response) => {
     })
 })
 
-app.get('/api/persons/:id',(request,response)=>{
-    const person = persons.find(p=>p.id === request.params.id)
-    if(!person){
+//get's the item of the specified id
+app.get('/api/persons/:id', (request, response, next) => {
+    /*const person = persons.find(p => p.id === request.params.id)
+    if (!person) {
         response.status(404).json({
-            error:'persona no encontrada'
+            error: 'persona no encontrada'
         })
     }
-    response.json(person)
+    response.json(person)*/
+    Person.findById(request.params.id)
+        .then(p => {
+            if (!p) {
+                return response.status(404).end()
+            }
+            response.json(p)
+        })
+        .catch(error => next(error))
+})
+
+app.put('/api/persons/:id', (request, response, next) => {
+    const { name, number } = request.body
+    Person.findById(request.params.id)
+        .then(p => {
+            if (p) {
+                p.name = name
+                p.number = number
+                return p.save().then(result => response.json(result))
+            } else {
+                return response.status(404).end()
+            }
+        })
+        .catch(error => next(error))
 })
 
 const getNextId = () => {
     const ids = persons.map(p => Number(p.id))
     let valid = false
-    while(!valid){
-        const randomId = Math.floor(Math.random()*100)
-        if(!ids.includes(randomId)){
+    while (!valid) {
+        const randomId = Math.floor(Math.random() * 100)
+        if (!ids.includes(randomId)) {
             valid = true
             return randomId
         }
@@ -97,15 +132,16 @@ const getNextId = () => {
 }
 
 const validate = (person) => {
-    if(!person) return {value:false,msg:'request body undifine'}
-    if(!person.name) return {value:false,msg:'name undifine'}
+    if (!person) return { value: false, msg: 'request body undifine' }
+    if (!person.name) return { value: false, msg: 'name undifine' }
     const names = persons.map(p => p.name.toLowerCase())
-    if(names.includes(person.name.toLowerCase())) return {value:false,msg:'name must be unique'}
-    if(!person.number) return {value:false,msg:'number undifine'}
-    return {value:true}
+    if (names.includes(person.name.toLowerCase())) return { value: false, msg: 'name must be unique' }
+    if (!person.number) return { value: false, msg: 'number undifine' }
+    return { value: true }
 }
 
-app.post('/api/persons',(request,response)=>{
+//creates a new item
+app.post('/api/persons', (request, response) => {
     const person = request.body
     console.log(person)
     /*const validation = validate(person)
@@ -117,10 +153,10 @@ app.post('/api/persons',(request,response)=>{
     person.id = String(getNextId())
     //console.log(person)
     persons = persons.concat(person)*/
-    if(person){
+    if (person) {
         const p = new Person({
-            name:person.name,
-            number:person.number
+            name: person.name,
+            number: person.number
         })
         p.save().then(personSaved => {
             response.json(personSaved)
@@ -129,17 +165,28 @@ app.post('/api/persons',(request,response)=>{
     //response.json(person)
 })
 
-app.delete('/api/persons/:id',(request,response)=>{
-    persons = persons.filter(p => p.id !== request.params.id)
-    response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+    //persons = persons.filter(p => p.id !== request.params.id)
+    //response.status(204).end()
+    Person.findByIdAndDelete(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => next(error))
 })
 
 app.get('/info', (request, response) => {
-    let date = new Date()
-    let htmlInfo = `<div>Phonebook has info for ${persons.length} people</div>
-    <div>${date}</div>`
-    response.send(htmlInfo)
+    Person.find({})
+        .then(people => {
+            let date = new Date()
+            let htmlInfo = `<div>Phonebook has info for ${people.length} people</div><div>${date}</div>`
+            response.send(htmlInfo)
+        })
 })
+
+
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {

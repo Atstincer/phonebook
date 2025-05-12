@@ -69,11 +69,11 @@ const Person = mongoose.model('Person',personSchema)*/
 
 const errorHandler = (error, request, response, next) => {
     console.error(error)
-
     if (error.name === 'CastError') {
         return response.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === "ValidationError") {
+        return response.status(400).json({ error: error.message })
     }
-
     next(error)
 }
 
@@ -119,7 +119,7 @@ app.put('/api/persons/:id', (request, response, next) => {
         .catch(error => next(error))
 })
 
-const getNextId = () => {
+/*const getNextId = () => {
     const ids = persons.map(p => Number(p.id))
     let valid = false
     while (!valid) {
@@ -129,40 +129,21 @@ const getNextId = () => {
             return randomId
         }
     }
-}
-
-const validate = (person) => {
-    if (!person) return { value: false, msg: 'request body undifine' }
-    if (!person.name) return { value: false, msg: 'name undifine' }
-    const names = persons.map(p => p.name.toLowerCase())
-    if (names.includes(person.name.toLowerCase())) return { value: false, msg: 'name must be unique' }
-    if (!person.number) return { value: false, msg: 'number undifine' }
-    return { value: true }
-}
+}*/
 
 //creates a new item
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
     const person = request.body
     console.log(person)
-    /*const validation = validate(person)
-    if(!validation.value){
-        return response.status(400).json({
-            error: validation.msg
-        })
-    }
-    person.id = String(getNextId())
-    //console.log(person)
-    persons = persons.concat(person)*/
-    if (person) {
-        const p = new Person({
-            name: person.name,
-            number: person.number
-        })
-        p.save().then(personSaved => {
+    const p = new Person({
+        name: person.name,
+        number: person.number
+    })
+    p.save()
+        .then(personSaved => {
             response.json(personSaved)
         })
-    }
-    //response.json(person)
+        .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (request, response, next) => {

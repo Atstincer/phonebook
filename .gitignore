@@ -1,4 +1,5 @@
 node_modules
 MongoDB.txt
 .env
+.vscode
 dist

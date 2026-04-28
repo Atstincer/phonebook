@@ -9,14 +9,14 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  build_and_test:    
+  build_and_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6        
-      - name: Install dependencies        
-        run: npm install
-      - name: Check style        
+      - uses: actions/setup-node@v6
+      - name: Install dependencies
+        run: npm install && cd frontend && npm install
+      - name: Check style
         run: npm run lint
       - name: Tests
         run: echo "doing some tests"

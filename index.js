@@ -13,59 +13,7 @@ morgan.token('req-body', function (req) {
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :req-body'))
 
-app.use(express.static('dist'))
-
-/*let persons = [
-    {
-        "id": "1",
-        "name": "Arto Hellas",
-        "number": "040-123456"
-    },
-    {
-        "id": "2",
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523"
-    },
-    {
-        "id": "3",
-        "name": "Dan Abramov",
-        "number": "12-43-234345"
-    },
-    {
-        "id": "4",
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122"
-    }
-]*/
-
-/*app.get('/',(request,response)=>{
-    response.send('<h1>Hello World</h1>')
-})*/
-
-/*const user = 'atstincer87'
-const psw = process.argv[2]
-const dbName = 'phonebook'
-
-const url = `mongodb+srv://${user}:${psw}@cluster0.rni2sqj.mongodb.net/${dbName}?retryWrites=true&w=majority&appName=Cluster0`
-
-mongoose.set('strictQuery', false)
-
-mongoose.connect(url)
-
-const personSchema = new mongoose.Schema({
-    name:String,
-    number:String
-})
-
-personSchema.set('toJSON',{
-    transform:(document, returnedObject) => {
-        returnedObject.id = returnedObject._id.toString()
-        delete returnedObject._id
-        delete returnedObject.__v
-    }
-})
-
-const Person = mongoose.model('Person',personSchema)*/
+app.use(express.static('./frontend/dist'))
 
 const errorHandler = (error, request, response, next) => {
   console.error(error)
@@ -79,7 +27,6 @@ const errorHandler = (error, request, response, next) => {
 
 //get's all of them
 app.get('/api/persons', (request, response) => {
-  //response.json(persons)
   Person.find({}).then(people => {
     response.json(people)
   })
@@ -87,13 +34,6 @@ app.get('/api/persons', (request, response) => {
 
 //get's the item of the specified id
 app.get('/api/persons/:id', (request, response, next) => {
-  /*const person = persons.find(p => p.id === request.params.id)
-  if (!person) {
-      response.status(404).json({
-          error: 'persona no encontrada'
-      })
-  }
-  response.json(person)*/
   Person.findById(request.params.id)
     .then(p => {
       if (!p) {
@@ -118,18 +58,6 @@ app.put('/api/persons/:id', (request, response, next) => {
     })
     .catch(error => next(error))
 })
-
-/*const getNextId = () => {
-    const ids = persons.map(p => Number(p.id))
-    let valid = false
-    while (!valid) {
-        const randomId = Math.floor(Math.random() * 100)
-        if (!ids.includes(randomId)) {
-            valid = true
-            return randomId
-        }
-    }
-}*/
 
 //creates a new item
 app.post('/api/persons', (request, response, next) => {

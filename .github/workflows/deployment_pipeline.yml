@@ -12,8 +12,8 @@ jobs:
   build_and_test:
     runs-on: ubuntu-latest
     steps:
-      - name: Simulating failure
-        run: exit 1
+#      - name: Simulating failure
+#        run: exit 1
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
       - name: Install dependencies
@@ -73,3 +73,16 @@ jobs:
 
             [View Commit](${{ github.event.head_commit.url }})
             [View Workflow Run](${{github.event.repository.html_url}}/actions/runs/${{github.run_id}}/job/${{job.check_run_id}})
+  tag_release:
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: ${{ github.event_name == 'push' && !contains(join(toJson(github.event.commits.*.message)),'#skip')}}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@4ed44965e0db8dab2b466a16da04aec3cc312fd8 
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_PREFIX: v
+          DEFAULT_BUMP: patch
+          DRY_RUN: true      
